@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2027 연봉 실수령액 · 연말정산 환급금 계산기 | KO9MA LAB</title>
+  <meta name="description" content="2027년 4대보험 요율과 개정 세법을 반영한 연봉 실수령액 계산기 및 연말정산 환급금 계산기. 내 정보를 브라우저에 안전하게 기록하고 바로 불러와 비교해 보세요." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-badge">2027</div>
+          <div>
+            <h1 class="brand-title">연봉 · 연말정산 랩</h1>
+            <p class="brand-sub">Zero-Backend · 내 브라우저 로컬 저장</p>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="계산기 전환">
+          <button type="button" class="nav-tab active" data-tab="salary" id="tab-btn-salary">
+            <span class="tab-dot"></span>
+            연봉 실수령액 계산기
+          </button>
+          <button type="button" class="nav-tab" data-tab="tax" id="tab-btn-tax">
+            <span class="tab-dot"></span>
+            연말정산 환급금 계산기
+          </button>
+        </nav>
+
+        <div class="topbar-actions">
+          <button type="button" class="btn-ghost" id="btn-open-vault" title="저장된 내 정보 및 기록 관리">
+            💾 내 정보 관리 <span class="badge-count" id="saved-count-badge">0</span>
+          </button>
+          <button type="button" class="btn-icon" id="btn-theme-toggle" aria-label="테마 전환" title="라이트/다크 테마 전환">
+            🌙
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Privacy & Info Banner -->
+    <div class="info-strip">
+      <div class="info-strip-inner">
+        <span>🔒 입력한 급여·공제 정보는 서버로 전송되지 않고 <strong>내 브라우저(LocalStorage)</strong>에만 저장됩니다.</span>
+        <span class="rate-pill">2027 기준: 국민연금 5.0% · 건강 3.595% · 장기요양 13.90% · 고용 1.0%</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-container">
+      <!-- ==================== VIEW 1: 2027 SALARY CALCULATOR ==================== -->
+      <section id="view-salary" class="view-section active" aria-labelledby="tab-btn-salary">
+        <div class="grid-2col">
+          <!-- Left: Inputs -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2>2027 연봉 · 월급 조건 입력</h2>
+                <p class="card-desc">세전 연봉과 비과세·부양가족 조건을 입력하면 실수령액이 실시간 계산됩니다.</p>
+              </div>
+              <button type="button" class="btn-sm btn-outline" id="btn-save-salary-snapshot">📌 기록 저장</button>
+            </div>
+
+            <div class="form-group">
+              <label for="sal-mode">급여 기준 &amp; 퇴직금</label>
+              <div class="segmented-row">
+                <div class="segmented" id="sal-basis-group">
+                  <button type="button" class="seg-btn active" data-val="annual">연봉 기준</button>
+                  <button type="button" class="seg-btn" data-val="monthly">월급 기준</button>
+                </div>
+                <div class="segmented" id="sal-sev-group">
+                  <button type="button" class="seg-btn active" data-val="separate">퇴직금 별도</button>
+                  <button type="button" class="seg-btn" data-val="included">퇴직금 포함</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="label-row">
+                <label for="sal-amount" id="sal-amount-label">세전 연봉 (원)</label>
+                <span class="korean-unit" id="sal-amount-kr">5,000만 원</span>
+              </div>
+              <input type="number" id="sal-amount" value="50000000" step="1000000" min="0" />
+              <div class="quick-chips">
+                <button type="button" class="chip" data-add="1000000">+100만</button>
+                <button type="button" class="chip" data-add="5000000">+500만</button>
+                <button type="button" class="chip" data-add="10000000">+1,000만</button>
+                <button type="button" class="chip" data-set="26835600">2027 최저연봉</button>
+                <button type="button" class="chip" data-set="50000000">5,000만</button>
+                <button type="button" class="chip" data-set="80000000">8,000만</button>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="sal-nontax">월 비과세액 (식대 등)</label>
+                  <span class="hint">월 20만 원 기본</span>
+                </div>
+                <input type="number" id="sal-nontax" value="200000" step="10000" min="0" />
+              </div>
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="sal-dependents">부양가족 수 (본인 포함)</label>
+                  <span class="hint">최소 1명</span>
+                </div>
+                <input type="number" id="sal-dependents" value="1" min="1" max="15" />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="sal-children">20세 이하 자녀 수</label>
+                  <span class="hint">자녀세액공제 반영</span>
+                </div>
+                <input type="number" id="sal-children" value="0" min="0" max="10" />
+              </div>
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="sal-emp-rate">고용보험 근로자 요율 (%)</label>
+                  <span class="hint">2027 정부안 1.0%</span>
+                </div>
+                <input type="number" id="sal-emp-rate" value="1.0" step="0.1" min="0" max="5" />
+              </div>
+            </div>
+
+            <details class="advanced-box">
+              <summary>⚙️ 2027년 4대보험 요율 세부 설정 (국민·건강·장기요양)</summary>
+              <div class="form-row-3" style="margin-top: 12px;">
+                <div class="form-group">
+                  <label for="rate-pension">국민연금 (%)</label>
+                  <input type="number" id="rate-pension" value="5.0" step="0.1" min="0" max="15" />
+                </div>
+                <div class="form-group">
+                  <label for="rate-health">건강보험 (%)</label>
+                  <input type="number" id="rate-health" value="3.595" step="0.005" min="0" max="15" />
+                </div>
+                <div class="form-group">
+                  <label for="rate-ltc">장기요양 (건보의 %)</label>
+                  <input type="number" id="rate-ltc" value="13.90" step="0.01" min="0" max="30" />
+                </div>
+              </div>
+              <p class="hint">※ 2027년 개편 기준: 국민연금 근로자 5.0%(총 10.0%), 건강보험 3.595%(총 7.19%), 장기요양 건보료의 13.90%가 기본 적용됩니다.</p>
+            </details>
+
+            <div class="action-bar">
+              <button type="button" class="btn-primary full-width" id="btn-sync-to-tax">
+                🔄 이 급여 정보로 연말정산 환급금 바로 계산하기 →
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Results -->
+          <div class="stack-col">
+            <div class="card hero-result">
+              <div class="hero-top">
+                <span class="hero-label">2027 예상 월 실수령액</span>
+                <span class="hero-badge" id="sal-takehome-ratio">실수령률 84.2%</span>
+              </div>
+              <div class="hero-value" id="res-monthly-net">3,510,240원</div>
+              <div class="hero-sub">
+                <span>연간 실수령액 <strong id="res-annual-net">42,122,880원</strong></span>
+                <span>월 공제 합계 <strong id="res-monthly-deduct">656,426원</strong></span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-seg seg-net" id="bar-net" style="width: 84%"></div>
+                <div class="progress-seg seg-ins" id="bar-ins" style="width: 10%"></div>
+                <div class="progress-seg seg-tax" id="bar-tax" style="width: 6%"></div>
+              </div>
+              <div class="legend-row">
+                <span><i class="dot dot-net"></i>실수령액</span>
+                <span><i class="dot dot-ins"></i>4대보험</span>
+                <span><i class="dot dot-tax"></i>소득세·지방세</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>월 공제 항목 상세 내역</h3>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>항목</th>
+                    <th>적용 기준</th>
+                    <th class="num">월 공제액</th>
+                    <th class="num">연 환산</th>
+                  </tr>
+                </thead>
+                <tbody id="sal-breakdown-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <h3>연봉 구간별 실수령액 비교 (협상 · 이직 참고)</h3>
+              <table class="data-table compact">
+                <thead>
+                  <tr>
+                    <th>연봉 구간</th>
+                    <th class="num">월 실수령액</th>
+                    <th class="num">월 공제액</th>
+                    <th class="num">실수령률</th>
+                  </tr>
+                </thead>
+                <tbody id="sal-compare-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 2: 2027 YEAR-END TAX CALCULATOR ==================== -->
+      <section id="view-tax" class="view-section" aria-labelledby="tab-btn-tax">
+        <div class="grid-2col">
+          <!-- Left: Inputs -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2>2027 연말정산 공제 항목 입력</h2>
+                <p class="card-desc">총급여와 카드·연금·월세 등 공제 내역을 입력하면 예상 환급금을 계산합니다.</p>
+              </div>
+              <button type="button" class="btn-sm btn-outline" id="btn-save-tax-snapshot">📌 기록 저장</button>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="tax-gross">연간 총급여액 (비과세 제외)</label>
+                  <span class="korean-unit" id="tax-gross-kr">4,760만 원</span>
+                </div>
+                <input type="number" id="tax-gross" value="47600000" step="1000000" min="0" />
+              </div>
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="tax-prepaid">기납부 소득세 (지방세 포함)</label>
+                  <button type="button" class="link-btn" id="btn-estimate-prepaid">자동 추정</button>
+                </div>
+                <input type="number" id="tax-prepaid" value="1850000" step="50000" min="0" />
+              </div>
+            </div>
+
+            <div class="section-divider">1. 인적공제 및 4대보험</div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="tax-dependents">기본공제 인원 (본인 포함)</label>
+                <input type="number" id="tax-dependents" value="1" min="1" max="15" />
+              </div>
+              <div class="form-group">
+                <label for="tax-children">자녀 수 (만 8~20세)</label>
+                <input type="number" id="tax-children" value="0" min="0" max="10" />
+              </div>
+              <div class="form-group">
+                <label for="tax-ins-paid">연간 4대보험 납부액</label>
+                <input type="number" id="tax-ins-paid" value="4660000" step="100000" min="0" />
+              </div>
+            </div>
+
+            <div class="section-divider">2. 신용 · 체크카드 · 현금영수증 (총급여 25% 초과분 공제)</div>
+            <div class="threshold-banner" id="card-threshold-banner">
+              최저사용금액(총급여 25%): <strong>11,900,000원</strong> 초과분부터 공제 시작
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="tax-card-credit">신용카드 (15%)</label>
+                <input type="number" id="tax-card-credit" value="10000000" step="500000" min="0" />
+              </div>
+              <div class="form-group">
+                <label for="tax-card-debit">체크·현금영수증 (30%)</label>
+                <input type="number" id="tax-card-debit" value="8000000" step="500000" min="0" />
+              </div>
+              <div class="form-group">
+                <label for="tax-card-special">전통시장·대중교통 (40%)</label>
+                <input type="number" id="tax-card-special" value="2000000" step="200000" min="0" />
+              </div>
+            </div>
+
+            <div class="section-divider">3. 노후 · 주거 · 특별 세액공제</div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="tax-pension-save">연금저축 + IRP 납입액</label>
+                  <span class="hint">합산 최대 900만 원</span>
+                </div>
+                <input type="number" id="tax-pension-save" value="3000000" step="500000" min="0" max="20000000" />
+              </div>
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="tax-rent">연간 월세 납입액 (무주택)</label>
+                  <span class="hint">2027 한도 1,200만 원</span>
+                </div>
+                <input type="number" id="tax-rent" value="0" step="500000" min="0" />
+              </div>
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="tax-housing-sub">주택청약저축 (연 300만 한도)</label>
+                <input type="number" id="tax-housing-sub" value="1200000" step="120000" min="0" />
+              </div>
+              <div class="form-group">
+                <label for="tax-medical">의료비 (총급여 3% 초과분)</label>
+                <input type="number" id="tax-medical" value="0" step="100000" min="0" />
+              </div>
+              <div class="form-group">
+                <label for="tax-edu-don">교육비 · 기부금 · 보험료</label>
+                <input type="number" id="tax-edu-don" value="500000" step="100000" min="0" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Tax Results -->
+          <div class="stack-col">
+            <div class="card hero-result" id="tax-hero-card">
+              <div class="hero-top">
+                <span class="hero-label" id="tax-result-label">2027 예상 연말정산 결과</span>
+                <span class="hero-badge" id="tax-status-badge">환급 예상</span>
+              </div>
+              <div class="hero-value" id="res-tax-refund">+742,500원</div>
+              <div class="hero-sub">
+                <span>결정세액 <strong id="res-tax-final">1,107,500원</strong></span>
+                <span>기납부세액 <strong id="res-tax-prepaid">1,850,000원</strong></span>
+              </div>
+              <div class="tax-tip-box" id="tax-advice-box">
+                💡 연금저축·IRP 한도가 600만 원 남았습니다. 추가 납입 시 최대 79만 원 추가 환급이 가능합니다.
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>세액 산출 워터폴 (총급여 → 결정세액)</h3>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>계산 단계</th>
+                    <th>적용 규칙</th>
+                    <th class="num">금액</th>
+                  </tr>
+                </thead>
+                <tbody id="tax-waterfall-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <h3>💳 카드 황금비율 &amp; 추가 절세 진단</h3>
+              <div id="tax-diagnostic-list" class="diag-list">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>KO9MA LAB · 2027 연봉 &amp; 연말정산 계산기 | 본 계산기는 2027년 4대보험 요율 및 세법 기준 모의 계산용이며, 실제 원천징수 및 국세청 홈택스 확정액과 일부 차이가 있을 수 있습니다.</p>
+    </footer>
+  </div>
+
+  <!-- ==================== MODAL / DRAWER: MY PROFILE VAULT ==================== -->
+  <div class="modal-backdrop" id="vault-modal" hidden>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="vault-title">
+      <div class="modal-header">
+        <div>
+          <h2 id="vault-title">💾 내 정보 프로필 &amp; 계산 기록</h2>
+          <p class="card-desc">브라우저 LocalStorage에 안전하게 저장되며, 언제든 불러오거나 JSON 파일로 백업할 수 있습니다.</p>
+        </div>
+        <button type="button" class="btn-icon" id="btn-close-vault" aria-label="닫기">✕</button>
+      </div>
+
+      <div class="vault-save-row">
+        <input type="text" id="profile-name-input" placeholder="프로필 이름 입력 (예: 2027 본봉 기준, 이직 제안 A)" maxlength="40" />
+        <button type="button" class="btn-primary" id="btn-save-profile">현재 상태 저장</button>
+      </div>
+
+      <div class="vault-tools">
+        <button type="button" class="btn-sm btn-outline" id="btn-export-json">📤 JSON 백업 다운로드</button>
+        <label class="btn-sm btn-outline file-label">
+          📥 JSON 불러오기
+          <input type="file" id="input-import-json" accept="application/json" hidden />
+        </label>
+        <button type="button" class="btn-sm btn-danger-outline" id="btn-clear-all">🗑️ 전체 초기화</button>
+      </div>
+
+      <div class="vault-list" id="vault-list">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
